@@ -6,3 +6,42 @@
   --font-display: "Space Grotesk", sans-serif;
 }
 
+/* From Uiverse.io by adamgiebl */ 
+.ai-btn {
+  display: flex;
+  align-items: center;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 17px;
+  padding: 0.8em 1.3em 0.8em 0.9em;
+  color: white;
+  background: #ad5389;
+  background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+  border: none;
+  letter-spacing: 0.05em;
+  border-radius: 16px;
+  position: fixed; /* Locked to bottom right */
+  bottom: 20px;
+  right: 20px;
+  z-index: 50;
+}
+
+.ai-btn svg {
+  margin-right: 3px;
+  transform: rotate(30deg);
+  transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.ai-btn span {
+  transition: transform 0.5s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.ai-btn:hover svg {
+  transform: translateX(5px) rotate(90deg);
+}
+
+.ai-btn:hover span {
+  transform: translateX(7px);
+}
+

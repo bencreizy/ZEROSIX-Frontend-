@@ -10,6 +10,7 @@ import type { MouseEvent, KeyboardEvent, ChangeEvent } from "react";
 import { GLSLHills } from "./components/GLSLHills";
 import { GeometricMesh } from "./components/GeometricMesh";
 import Markdown from "react-markdown";
+import { executeModelLogic } from "./bridge";
 
 interface Attachment {
   type: 'image' | 'file' | 'url';
@@ -39,27 +40,82 @@ export default function App() {
     }
   }, [messages, isVisible]);
 
+  // Listen for HUD logs
+  useEffect(() => {
+    const handleHudLog = (e: any) => {
+      const newMessage: Message = {
+        id: `sys-${Date.now()}`,
+        role: 'assistant',
+        content: e.detail
+      };
+      setMessages(prev => [...prev, newMessage]);
+    };
+
+    window.addEventListener('hud-log', handleHudLog);
+    return () => window.removeEventListener('hud-log', handleHudLog);
+  }, []);
+
   const toggleHUD = () => {
     setIsVisible(!isVisible);
   };
 
+  const syncModelDirectory = async (e: MouseEvent) => {
+    e.stopPropagation();
+    try {
+      // 1. Establish direct link to the local model file
+      // @ts-ignore
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ 
+          description: 'Model Files', 
+          accept: { 'application/octet-stream': ['.bin', '.gguf', '.onnx'] } 
+        }],
+        multiple: false
+      });
+
+      const file = await handle.getFile();
+
+      // 2. Transmit signal to HUD without UI redraw
+      const logEvent = new CustomEvent('hud-log', { 
+        detail: `[SYSTEM]: Model ${file.name} Synchronized.` 
+      });
+      window.dispatchEvent(logEvent);
+
+      // 3. Store handle for the Execute logic
+      // @ts-ignore
+      window.currentModelHandle = handle;
+
+    } catch (err) {
+      // Silent fail on cancel to prevent logic heat
+    }
+  };
+
   /**
-   * BACKEND HOOK: Replace the logic inside this function to connect your AI model.
-   * This function is called after the user sends a message.
+   * BACKEND HOOK: Connects to Hermes/Momoa model via bridge.
    */
   const getAIResponse = async (userMsg: string, _attachments?: Attachment[]) => {
     setIsTyping(true);
     
-    // Simulate thinking delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Passing current message history or snapshot as "code" context if needed
+    const contextSnapshot = messages.map(m => `[${m.role}]: ${m.content}`).join('\n');
+    
+    const data = await executeModelLogic(contextSnapshot, userMsg);
 
-    const aiMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: `I received: "${userMsg}". \n\nYou can hook up your custom model here. I can handle [links](https://google.com), images, and files in my responses.`,
-    };
+    if (data) {
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `${data.updatedCode}\n\n---\n**Status/Telemetry:** ${data.telemetry}`,
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } else {
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: "⚠️ Signal Lost. Please check your proxy connection.",
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
 
-    setMessages(prev => [...prev, aiMessage]);
     setIsTyping(false);
   };
 
@@ -284,6 +340,18 @@ export default function App() {
 
       {/* Aesthetic Scanline effect */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] z-30" />
+
+      {/* AI Sync Button */}
+      <button className="ai-btn" onClick={syncModelDirectory}>
+        <svg height="24" width="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M0 0h24v24H0z" fill="none"></path>
+          <path
+            d="M5 13c0-5.088 2.903-9.436 7-11.182C16.097 3.564 19 7.912 19 13c0 .823-.076 1.626-.22 2.403l1.94 1.832a.5.5 0 0 1 .095.603l-2.495 4.575a.5.5 0 0 1-.793.114l-2.234-2.234a1 1 0 0 0-.707-.293H9.414a1 1 0 0 0-.707.293l-2.234 2.234a.5.5 0 0 1-.793-.114l-2.495-4.575a.5.5 0 0 1 .095-.603l1.94-1.832C5.077 14.626 5 13.823 5 13zm1.476 6.696l.817-.817A3 3 0 0 1 9.414 18h5.172a3 3 0 0 1 2.121.879l.817.817.982-1.8-1.1-1.04a2 2 0 0 1-.593-1.82c.124-.664.187-1.345.187-2.036 0-3.87-1.995-7.3-5-8.96C8.995 5.7 7 9.13 7 13c0 .691.063 1.372.187 2.037a2 2 0 0 1-.593 1.82l-1.1 1.039.982 1.8zM12 13a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"
+            fill="currentColor"
+          ></path>
+        </svg>
+        <span>AI</span>
+      </button>
     </div>
   );
 }

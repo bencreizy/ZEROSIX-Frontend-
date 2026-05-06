@@ -1,0 +1,36 @@
+/**
+ * FIZx²_v2_CORE SIDEAR BRIDGE
+ * Objective: Connect existing UI to Hermes/Momoa without layout drift.
+ */
+
+export const executeModelLogic = async (currentCode: string, userInstruction: string) => {
+    // 1. Establish the path of least resistance (The Tunnel)
+    // Replace with your 'lt' URL from the terminal
+    const PROXY_URL = "https://your-tunnel-id.loca.lt"; 
+
+    try {
+        const response = await fetch(`${PROXY_URL}/process`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                code: currentCode,
+                instruction: userInstruction,
+                agents: ["Hermes", "Momoa"] // Trigger internal logic
+            })
+        });
+
+        if (!response.ok) throw new Error("Signal Lost");
+
+        const result = await response.json();
+        
+        // 2. Return data to your existing UI components
+        return {
+            updatedCode: result.payload, // Hermes Output
+            telemetry: result.status     // Momoa Output
+        };
+
+    } catch (error) {
+        console.error("Critical Failure in Bridge:", error);
+        return null;
+    }
+};
