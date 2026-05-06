@@ -30,6 +30,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isVisible, setIsVisible] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isLocked, setIsLocked] = useState(true); // Resonant Stasis by default
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -62,7 +63,7 @@ export default function App() {
   const syncModelDirectory = async (e: MouseEvent) => {
     e.stopPropagation();
     try {
-      // 1. Establish direct link to the local model file
+      // 1. Pick the Model
       // @ts-ignore
       const [handle] = await window.showOpenFilePicker({
         types: [{ 
@@ -74,18 +75,37 @@ export default function App() {
 
       const file = await handle.getFile();
 
-      // 2. Transmit signal to HUD without UI redraw
-      const logEvent = new CustomEvent('hud-log', { 
-        detail: `[SYSTEM]: Model ${file.name} Synchronized.` 
+      // 2. Trigger Server-Side Folder Creation
+      const response = await fetch('/api/init-ecosystem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelName: file.name })
       });
-      window.dispatchEvent(logEvent);
+      
+      if (response.ok) {
+        setIsLocked(false);
+        // 3. Notify HUD of progress
+        window.dispatchEvent(new CustomEvent('hud-log', { 
+            detail: `[SYSTEM]: Model ${file.name} Synchronized.` 
+        }));
+        
+        window.dispatchEvent(new CustomEvent('hud-log', { 
+            detail: `[SYSTEM]: Vector Engine (all-MiniLM) Online. Indexing /memory...` 
+        }));
 
-      // 3. Store handle for the Execute logic
+        window.dispatchEvent(new CustomEvent('hud-log', { 
+            detail: `[SYSTEM]: Ecosystem /media, /data, /history initialized.` 
+        }));
+      }
+
+      // 4. Global Handle Lock
+      // @ts-ignore
+      window.activeModel = handle;
       // @ts-ignore
       window.currentModelHandle = handle;
 
     } catch (err) {
-      // Silent fail on cancel to prevent logic heat
+      // Zero-Drift silent fail
     }
   };
 
@@ -101,6 +121,7 @@ export default function App() {
     const data = await executeModelLogic(contextSnapshot, userMsg);
 
     if (data) {
+      setIsLocked(false); // Update state via timer tick once Gemma returns
       const aiMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
@@ -173,7 +194,7 @@ export default function App() {
       onClick={toggleHUD}
     >
       {/* Layer 0: Hills */}
-      <GLSLHills />
+      <GLSLHills isLocked={isLocked} />
 
       {/* Layer 1: Geometric Mesh */}
       <GeometricMesh />
@@ -331,6 +352,7 @@ export default function App() {
                   className="p-3 rounded-lg text-white/60 hover:text-white transition-colors"
                 >
                   <Send className="w-5 h-5" />
+                  <span className="hidden group-focus-within:inline text-xs font-mono ml-2 opacity-50 uppercase tracking-tighter">Execute</span>
                 </motion.button>
               </div>
             </div>

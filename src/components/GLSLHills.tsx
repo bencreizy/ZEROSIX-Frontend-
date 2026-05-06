@@ -6,9 +6,14 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-const GLSLHills = ({ width = '100vw', height = '100vh', cameraZ = 125, planeSize = 256, speed = 0.5 }) => {
+const GLSLHills = ({ width = '100vw', height = '100vh', cameraZ = 125, planeSize = 256, speed = 0.5, isLocked = false }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isLockedRef = useRef(isLocked);
+
+  useEffect(() => {
+    isLockedRef.current = isLocked;
+  }, [isLocked]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -165,7 +170,7 @@ const GLSLHills = ({ width = '100vw', height = '100vh', cameraZ = 125, planeSize
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: false, alpha: true });
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
-    const clock = new THREE.Clock();
+    const timer = new THREE.Timer();
     const plane = new Plane();
 
     const resize = () => {
@@ -178,7 +183,10 @@ const GLSLHills = ({ width = '100vw', height = '100vh', cameraZ = 125, planeSize
     let requestID: number;
 
     const render = () => {
-      plane.render(clock.getDelta());
+      if (!isLockedRef.current) {
+        timer.update();
+        plane.render(timer.getDelta());
+      }
       renderer.render(scene, camera);
     };
 

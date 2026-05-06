@@ -277,18 +277,10 @@ const GeometricMesh = () => {
     setShapeIndex((prev) => (prev + 1) % shapes.length);
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShapeIndex((prev) => (prev + 1) % shapes.length);
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [shapes.length]);
-
   return (
     <div 
       ref={containerRef} 
       className="absolute inset-0 z-1 pointer-events-none"
-      onClick={nextShape}
     >
       <canvas ref={canvasRef} className="w-full h-full block" />
     </div>

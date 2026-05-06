@@ -4,12 +4,13 @@
  */
 
 export const executeModelLogic = async (currentCode: string, userInstruction: string) => {
-    // 1. Establish the path of least resistance (The Tunnel)
-    // Replace with your 'lt' URL from the terminal
-    const PROXY_URL = "https://your-tunnel-id.loca.lt"; 
+    // 1. Establish the path of least resistance (The Tunnel or Local API)
+    // By default, use the local /api/process endpoint. 
+    // You can replace this with your 'lt' URL (e.g., "https://your-tunnel-id.loca.lt/process")
+    const API_ENDPOINT = "/api/process"; 
 
     try {
-        const response = await fetch(`${PROXY_URL}/process`, {
+        const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
