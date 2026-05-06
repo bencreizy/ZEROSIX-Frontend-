@@ -1,0 +1,6 @@
+{
+  "name": "Glass HUD Overlay",
+  "description": "A floating glass-morphism HUD over an all-black immersive background with interactive upload and send actions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
