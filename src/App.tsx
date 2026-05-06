@@ -63,49 +63,33 @@ export default function App() {
   const syncModelDirectory = async (e: MouseEvent) => {
     e.stopPropagation();
     try {
-      // 1. Pick the Model
-      // @ts-ignore
-      const [handle] = await window.showOpenFilePicker({
-        types: [{ 
-          description: 'Model Files', 
-          accept: { 'application/octet-stream': ['.bin', '.gguf', '.onnx'] } 
-        }],
-        multiple: false
-      });
-
-      const file = await handle.getFile();
-
-      // 2. Trigger Server-Side Folder Creation
+      // 1. Trigger Remote Handshake (Handshake with Home Server)
       const response = await fetch('/api/init-ecosystem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modelName: file.name })
+        body: JSON.stringify({ modelName: "Gemma-4-E4B-Sovereign" })
       });
       
       if (response.ok) {
         setIsLocked(false);
-        // 3. Notify HUD of progress
+        // 2. Notify HUD of progress
         window.dispatchEvent(new CustomEvent('hud-log', { 
-            detail: `[SYSTEM]: Model ${file.name} Synchronized.` 
+            detail: `[SYSTEM]: Remote Handshake Established.` 
         }));
         
         window.dispatchEvent(new CustomEvent('hud-log', { 
-            detail: `[SYSTEM]: Vector Engine (all-MiniLM) Online. Indexing /memory...` 
+            detail: `[SYSTEM]: Sovereign Node (S22 Ultra) Online.` 
         }));
 
         window.dispatchEvent(new CustomEvent('hud-log', { 
-            detail: `[SYSTEM]: Ecosystem /media, /data, /history initialized.` 
+            detail: `[SYSTEM]: Ecosystem /media, /data, /memory synchronized.` 
         }));
       }
 
-      // 4. Global Handle Lock
-      // @ts-ignore
-      window.activeModel = handle;
-      // @ts-ignore
-      window.currentModelHandle = handle;
-
     } catch (err) {
-      // Zero-Drift silent fail
+      window.dispatchEvent(new CustomEvent('hud-log', { 
+          detail: `[ERROR]: Handshake Failed. Check S22 Connection.` 
+      }));
     }
   };
 

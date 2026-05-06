@@ -4,19 +4,16 @@
  */
 
 export const executeModelLogic = async (currentCode: string, userInstruction: string) => {
-    // 1. Establish the path of least resistance (The Tunnel or Local API)
-    // By default, use the local /api/process endpoint. 
-    // You can replace this with your 'lt' URL (e.g., "https://your-tunnel-id.loca.lt/process")
-    const API_ENDPOINT = "/api/process"; 
+    // REDIRECT: Connecting to the Sovereign Node on S22 Ultra
+    const API_ENDPOINT = "http://localhost:8081/v1/completions"; 
 
     try {
         const response = await fetch(API_ENDPOINT, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                code: currentCode,
-                instruction: userInstruction,
-                agents: ["Hermes", "Momoa"] // Trigger internal logic
+                prompt: userInstruction,
+                context: currentCode
             })
         });
 
@@ -24,14 +21,14 @@ export const executeModelLogic = async (currentCode: string, userInstruction: st
 
         const result = await response.json();
         
-        // 2. Return data to your existing UI components
+        // Return data to the existing UI
         return {
-            updatedCode: result.payload, // Hermes Output
-            telemetry: result.status     // Momoa Output
+            updatedCode: result.content || result.response, // Gemma Output
+            telemetry: result.status                        // State Actualization
         };
 
     } catch (error) {
-        console.error("Critical Failure in Bridge:", error);
+        console.error("Critical Failure in Sovereign Bridge:", error);
         return null;
     }
 };
