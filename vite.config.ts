@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -9,10 +8,8 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     hmr: {
-      protocol: 'wss',   // Use Secure WebSockets for the tunnel
-      clientPort: 443,   // Route through standard HTTPS port
+      protocol: 'wss',   // Fixes the WebSocket closed error
+      clientPort: 443,   // Routes through the tunnel
     },
   },
-  // Ensure assets are handled correctly in the cloud IDE
-  base: './',
 });
